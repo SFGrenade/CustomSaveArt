@@ -13,6 +13,8 @@ namespace CustomSaveArt
     {
         internal static CustomSaveArt Instance;
 
+        static int CUSTOM_MAPZONE = (int)GlobalEnums.MapZone.WHITE_PALACE;
+
         public override string GetVersion() => Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
         public override void Initialize()
@@ -55,12 +57,12 @@ namespace CustomSaveArt
             #endregion
             if (cabgSprite != null)
             {
-                if ((ssbg.areaBackgrounds[0].areaName != GlobalEnums.MapZone.OUTSKIRTS) || !(ssbg.areaBackgrounds[0].backgroundImage.Equals(cabgSprite)))
+                if ((ssbg.areaBackgrounds[0].areaName != (GlobalEnums.MapZone)CUSTOM_MAPZONE) || !(ssbg.areaBackgrounds[0].backgroundImage.Equals(cabgSprite)))
                 {
                     AreaBackground[] customAreaBackgrounds = new AreaBackground[ssbg.areaBackgrounds.Length + 1];
                     ssbg.areaBackgrounds.CopyTo(customAreaBackgrounds, 1);
                     customAreaBackgrounds[0] = new AreaBackground();
-                    customAreaBackgrounds[0].areaName = GlobalEnums.MapZone.OUTSKIRTS;
+                    customAreaBackgrounds[0].areaName = (GlobalEnums.MapZone)CUSTOM_MAPZONE;
                     customAreaBackgrounds[0].backgroundImage = cabgSprite;
                     ssbg.areaBackgrounds = customAreaBackgrounds;
                 }
@@ -68,6 +70,8 @@ namespace CustomSaveArt
             Log("~OnSaveSlotButtonPresentSaveSlot");
 
             orig(self, saveStats);
+
+            On.UnityEngine.UI.SaveSlotButton.PresentSaveSlot -= OnSaveSlotButtonPresentSaveSlot;
         }
     }
 }
