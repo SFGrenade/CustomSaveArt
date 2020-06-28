@@ -6,6 +6,7 @@ using System.Collections;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 
 namespace CustomSaveArt
 {
@@ -15,25 +16,34 @@ namespace CustomSaveArt
 
         static int CUSTOM_MAPZONE = (int)GlobalEnums.MapZone.WHITE_PALACE;
 
-        public override string GetVersion() => Assembly.GetExecutingAssembly().GetName().Version.ToString();
+        private Sprite cabgSprite;
+
+        // Thx to 56
+        public override string GetVersion()
+        {
+            Assembly asm = Assembly.GetExecutingAssembly();
+
+            string ver = asm.GetName().Version.ToString();
+
+            SHA1 sha1 = SHA1.Create();
+            FileStream stream = File.OpenRead(asm.Location);
+
+            byte[] hashBytes = sha1.ComputeHash(stream);
+
+            string hash = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+
+            stream.Close();
+            sha1.Clear();
+
+            string ret = $"{ver}-{hash.Substring(0, 6)}";
+
+            return ret;
+        }
 
         public override void Initialize()
         {
             Log("Initializing");
             Instance = this;
-
-            On.UnityEngine.UI.SaveSlotButton.PresentSaveSlot += OnSaveSlotButtonPresentSaveSlot;
-
-            //GameManager.instance.StartCoroutine(AddCustomAreaBackground());
-            Log("Initialized");
-        }
-
-        private void OnSaveSlotButtonPresentSaveSlot(On.UnityEngine.UI.SaveSlotButton.orig_PresentSaveSlot orig, UnityEngine.UI.SaveSlotButton self, SaveStats saveStats)
-        {
-            Log("!OnSaveSlotButtonPresentSaveSlot");
-
-            SaveSlotBackgrounds ssbg = self.saveSlots;
-            Sprite cabgSprite = null;
 
             #region Load the Custom Area Background Sprite
             Assembly _asm = Assembly.GetExecutingAssembly();
@@ -55,23 +65,39 @@ namespace CustomSaveArt
                 }
             }
             #endregion
+
+            On.UnityEngine.UI.SaveSlotButton.PresentSaveSlot += OnSaveSlotButtonPresentSaveSlot;
+
+            //GameManager.instance.StartCoroutine(AddCustomAreaBackground());
+            Log("Initialized");
+        }
+
+        private void OnSaveSlotButtonPresentSaveSlot(On.UnityEngine.UI.SaveSlotButton.orig_PresentSaveSlot orig, UnityEngine.UI.SaveSlotButton self, SaveStats saveStats)
+        {
+
+            SaveSlotBackgrounds ssbg = self.saveSlots;
+
             if (cabgSprite != null)
             {
-                if ((ssbg.areaBackgrounds[0].areaName != (GlobalEnums.MapZone)CUSTOM_MAPZONE) || !(ssbg.areaBackgrounds[0].backgroundImage.Equals(cabgSprite)))
+                bool present = false;
+                foreach (var ab in ssbg.areaBackgrounds)
+                {
+                    present = present || ((ab.areaName != (GlobalEnums.MapZone)CUSTOM_MAPZONE) || !(ab.backgroundImage.Equals(cabgSprite)));
+                }
+                if (present)
                 {
                     AreaBackground[] customAreaBackgrounds = new AreaBackground[ssbg.areaBackgrounds.Length + 1];
                     ssbg.areaBackgrounds.CopyTo(customAreaBackgrounds, 1);
-                    customAreaBackgrounds[0] = new AreaBackground();
-                    customAreaBackgrounds[0].areaName = (GlobalEnums.MapZone)CUSTOM_MAPZONE;
-                    customAreaBackgrounds[0].backgroundImage = cabgSprite;
+                    customAreaBackgrounds[0] = new AreaBackground
+                    {
+                        areaName = (GlobalEnums.MapZone)CUSTOM_MAPZONE,
+                        backgroundImage = cabgSprite
+                    };
                     ssbg.areaBackgrounds = customAreaBackgrounds;
                 }
             }
-            Log("~OnSaveSlotButtonPresentSaveSlot");
 
             orig(self, saveStats);
-
-            On.UnityEngine.UI.SaveSlotButton.PresentSaveSlot -= OnSaveSlotButtonPresentSaveSlot;
         }
     }
 }
