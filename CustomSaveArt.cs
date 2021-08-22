@@ -13,9 +13,9 @@ namespace CustomSaveArt
     {
         internal static CustomSaveArt Instance;
 
-        private static readonly int CUSTOM_MAPZONE = (int) MapZone.WHITE_PALACE;
+        private static readonly int CustomMapzone = (int) MapZone.WHITE_PALACE;
 
-        private Sprite cabgSprite;
+        private Sprite _cabgSprite;
 
         // Thx to 56
         public override string GetVersion()
@@ -46,8 +46,8 @@ namespace CustomSaveArt
 
             #region Load the Custom Area Background Sprite
 
-            var _asm = Assembly.GetExecutingAssembly();
-            using (var s = _asm.GetManifestResourceStream("CustomSaveArt.Resources.CustomAreaArt.png"))
+            var asm = Assembly.GetExecutingAssembly();
+            using (var s = asm.GetManifestResourceStream("CustomSaveArt.Resources.CustomAreaArt.png"))
             {
                 if (s != null)
                 {
@@ -61,7 +61,7 @@ namespace CustomSaveArt
                     tex.LoadImage(buffer, true);
 
                     // Create sprite from texture
-                    cabgSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+                    _cabgSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
                 }
             }
 
@@ -78,20 +78,20 @@ namespace CustomSaveArt
         {
             var ssbg = self.saveSlots;
 
-            if (cabgSprite != null)
+            if (_cabgSprite != null)
             {
                 var present = false;
                 foreach (var ab in ssbg.areaBackgrounds)
-                    present = present || ab.areaName != (MapZone) CUSTOM_MAPZONE ||
-                              !ab.backgroundImage.Equals(cabgSprite);
+                    present = present || ab.areaName != (MapZone) CustomMapzone ||
+                              !ab.backgroundImage.Equals(_cabgSprite);
                 if (present)
                 {
                     var customAreaBackgrounds = new AreaBackground[ssbg.areaBackgrounds.Length + 1];
                     ssbg.areaBackgrounds.CopyTo(customAreaBackgrounds, 1);
                     customAreaBackgrounds[0] = new AreaBackground
                     {
-                        areaName = (MapZone) CUSTOM_MAPZONE,
-                        backgroundImage = cabgSprite
+                        areaName = (MapZone) CustomMapzone,
+                        backgroundImage = _cabgSprite
                     };
                     ssbg.areaBackgrounds = customAreaBackgrounds;
                 }
